@@ -1,0 +1,57 @@
+version: "2"
+services:
+  frontend:
+    image: daveti/frontend-test:1.0.1
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - frontend
+  backend:
+    image: daveti/backend-test:1.0.0
+    environment:
+      APP_DEBUG: 1
+    ports:
+      - "5000:5000"
+    depends_on: 
+      - db
+    networks:
+      - frontend
+      - backend
+  db:
+    image: mysql:5.7
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ./data:/docker-entrypoint-initdb.d/:ro
+    networks:
+      - backend
+
+  selenium:
+    image: selenium/standalone-chrome
+    ports:
+      - "4444:4444"
+    networks:
+      - tests
+      - frontend
+
+  tests:
+    build: .
+    depends_on:
+      - selenium
+      - frontend
+      - backend
+      - db
+    volumes:
+      - ./reports:/behave/reports
+    networks:
+      - tests
+      - frontend
+
+networks:
+  backend:
+  frontend:
+  tests:
